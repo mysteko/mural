@@ -1,0 +1,37 @@
+name: Publish AgentRouter APK
+
+on:
+  push:
+    branches: [agentrouter-gpt-5.6]
+    paths: ['.github/workflows/publish-agentrouter-apk.yml']
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  publish:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 25
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+      - uses: actions/setup-java@de7274f081f381c8f8158605e0321c36c376e2e6 # v6.0.1
+        with:
+          distribution: temurin
+          java-version: '17'
+      - name: Install SDK components
+        run: $ANDROID_HOME/cmdline-tools/latest/bin/sdkmanager 'platforms;android-36' 'build-tools;35.0.0'
+      - name: Test and build APK
+        working-directory: apps/android
+        run: ./gradlew --no-daemon :app:testDebugUnitTest :app:lintDebug :app:assembleDebug
+      - name: Prepare direct-download APK
+        run: cp apps/android/app/build/outputs/apk/debug/app-debug.apk Mural-AgentRouter-GPT-5.6.apk
+      - name: Publish GitHub Release
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          gh release delete agentrouter-gpt-5.6-preview --cleanup-tag --yes || true
+          gh release create agentrouter-gpt-5.6-preview Mural-AgentRouter-GPT-5.6.apk \
+            --target "$GITHUB_SHA" \
+            --title "Mural AgentRouter GPT-5.6 Android Preview" \
+            --notes "Android preview configured for AgentRouter at https://agentrouter.org/v1 using gpt-5.6. Enter your own fresh API key in Settings. Live voice requires AgentRouter compatibility with the OpenAI live-session WebRTC protocol."
