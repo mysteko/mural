@@ -101,7 +101,7 @@ class APIClient private constructor(
         purpose: HelperPurpose?,
     ): APIResult {
         val body = buildJsonObject {
-            put("model", "gpt-5.6-luna")
+            put("model", "gpt-5.6")
             put("store", false)
             put("instructions", instructions)
             put("input", buildJsonArray {
@@ -149,18 +149,18 @@ class APIClient private constructor(
     }
 
     sealed class APIException(message: String, cause: Throwable? = null) : IOException(message, cause) {
-        data object MissingKey : APIException("Add your OpenAI key in Settings to begin.")
-        data object InvalidResponse : APIException("OpenAI returned an incomplete response. Please try again.")
-        data object Incomplete : APIException("OpenAI returned an incomplete response. Please try again.")
+        data object MissingKey : APIException("Add your AgentRouter key in Settings to begin.")
+        data object InvalidResponse : APIException("AgentRouter returned an incomplete response. Please try again.")
+        data object Incomplete : APIException("AgentRouter returned an incomplete response. Please try again.")
         data object Refused : APIException("Mural couldn't complete that request. Try a different topic.")
         class Http(val status: Int) : APIException(messageFor(status))
 
         companion object {
             private fun messageFor(status: Int): String = when (status) {
-                401 -> "Your OpenAI key wasn't accepted. Check it in Settings."
-                403, 404 -> "This API key may not have access to the requested model. Check your OpenAI project."
-                429 -> "OpenAI's usage or rate limit was reached. Check your project billing and limits."
-                else -> "OpenAI couldn't complete the request (HTTP $status). Please try again."
+                401 -> "Your AgentRouter key wasn't accepted. Check it in Settings."
+                403, 404 -> "This API key may not have access to the requested model. Check your AgentRouter account."
+                429 -> "AgentRouter's usage or rate limit was reached. Check your project billing and limits."
+                else -> "AgentRouter couldn't complete the request (HTTP $status). Please try again."
             }
         }
     }
@@ -168,7 +168,7 @@ class APIClient private constructor(
     companion object {
         private val API_BASE_URL = HttpUrl.Builder()
             .scheme("https")
-            .host("api.openai.com")
+            .host("agentrouter.org")
             .addPathSegment("v1")
             .addPathSegment("")
             .build()
