@@ -210,29 +210,36 @@ fun TalkScreen(
             Spacer(Modifier.width(when { scrollPage -> 12.dp; compact -> 20.dp; else -> 27.dp }))
             val micDescription = stringResource(when {
                 vm.state == "active" && !vm.isVoiceSession -> R.string.talk_status_written
-                vm.state != "active" -> R.string.talk_mic_start_desc
+                vm.state != "active" -> R.string.talk_type_button
                 vm.isMuted -> R.string.talk_mic_unmute_desc
                 else -> R.string.talk_mic_mute_desc
             })
-            val micEnabled = !busy && (vm.state != "active" || vm.isVoiceSession)
+            val micEnabled = !busy && !vm.working
             Box(Modifier.padding(bottom = if (compact) 15.dp else 19.dp).size(if (compact) 66.dp else 76.dp)
                 .shadow(18.dp, CircleShape, ambientColor = MuralColors.Orange.copy(alpha = .15f), spotColor = MuralColors.Orange.copy(alpha = .25f))
                 .background(Brush.linearGradient(listOf(Color(0xFFFFBA7A), MuralColors.Orange)), CircleShape).clip(CircleShape)
                 .testTag("start-conversation").semantics { contentDescription = micDescription }
                 .clickable(enabled = micEnabled, role = Role.Button) {
-                    if (vm.state == "active" && vm.isVoiceSession) vm.toggleMute() else onMicrophone()
+                    if (vm.state == "active" && vm.isVoiceSession) vm.toggleMute() else typing = true
                 }, contentAlignment = Alignment.Center) {
                 if (busy) CircularProgressIndicator(Modifier.size(25.dp), color = MuralColors.Ink, strokeWidth = 2.dp)
-                else MuralIcon(if (vm.isMuted && vm.state == "active") MuralSymbol.MicOff else MuralSymbol.Mic,
-                    modifier = Modifier.size(30.dp))
+                else MuralIcon(
+                    if (vm.state == "active" && vm.isVoiceSession) {
+                        if (vm.isMuted) MuralSymbol.MicOff else MuralSymbol.Mic
+                    } else MuralSymbol.Keyboard,
+                    modifier = Modifier.size(30.dp),
+                )
             }
             Spacer(Modifier.width(when { scrollPage -> 12.dp; compact -> 20.dp; else -> 27.dp }))
             RoundAction(if (vm.isRunning) MuralSymbol.End else MuralSymbol.Transcript,
                 stringResource(if (vm.isRunning) R.string.talk_end_label else R.string.talk_transcript_label),
                 enabled = vm.session != null, onClick = { if (vm.isRunning) vm.end() else transcript = vm.session })
         }
-        Text(stringResource(if (vm.state == "active" && vm.isVoiceSession && !vm.isMuted) R.string.talk_microphone_on else R.string.talk_microphone_off),
-            style = MaterialTheme.typography.bodySmall, color = MuralColors.Secondary, modifier = Modifier.padding(top = 6.dp))
+        Text(stringResource(when {
+            vm.state == "active" && !vm.isVoiceSession -> R.string.talk_status_written
+            vm.state == "active" && !vm.isMuted -> R.string.talk_microphone_on
+            else -> R.string.talk_microphone_off
+        }), style = MaterialTheme.typography.bodySmall, color = MuralColors.Secondary, modifier = Modifier.padding(top = 6.dp))
         if (vm.state == "active" || microphoneMessage != null) {
             Row(horizontalArrangement = Arrangement.spacedBy(18.dp), verticalAlignment = Alignment.CenterVertically) {
                 MuralTextButton(onClick = { typing = true }, enabled = !busy && !vm.working) {
